@@ -2,11 +2,11 @@ import { StrictMode } from "react";
 import { RecoilRoot } from "recoil";
 import { ThemeProvider } from "styled-components";
 import App from "./App";
-import { darkTheme } from "./theme";
 import { createGlobalStyle } from "styled-components";
 import { createRoot } from "react-dom/client";
 import { HelmetProvider } from "react-helmet-async";
 import Head from "./assets/components/Head";
+import { theme } from "./theme";
 
 const GlobalStyle = createGlobalStyle`
 html, body, div, span, applet, object, iframe,
@@ -75,7 +75,7 @@ a {
 createRoot(document.getElementById("root")!).render(
     <StrictMode>
         <RecoilRoot>
-            <ThemeProvider theme={darkTheme}>
+            <ThemeProvider theme={theme}>
                 <HelmetProvider>
                     <Head />
                     <GlobalStyle />
