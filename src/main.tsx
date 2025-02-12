@@ -7,6 +7,7 @@ import { createRoot } from "react-dom/client";
 import { HelmetProvider } from "react-helmet-async";
 import Head from "./assets/components/Head";
 import { theme } from "./theme";
+import { QueryClient, QueryClientProvider } from "react-query";
 
 const GlobalStyle = createGlobalStyle`
 html, body, div, span, applet, object, iframe,
@@ -72,16 +73,20 @@ a {
 }
 `;
 
+const client = new QueryClient();
+
 createRoot(document.getElementById("root")!).render(
     <StrictMode>
         <RecoilRoot>
-            <ThemeProvider theme={theme}>
-                <HelmetProvider>
-                    <Head />
-                    <GlobalStyle />
-                    <App />
-                </HelmetProvider>
-            </ThemeProvider>
+            <QueryClientProvider client={client}>
+                <ThemeProvider theme={theme}>
+                    <HelmetProvider>
+                        <Head />
+                        <GlobalStyle />
+                        <App />
+                    </HelmetProvider>
+                </ThemeProvider>
+            </QueryClientProvider>
         </RecoilRoot>
     </StrictMode>
 );
