@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { getMovies, IGetMoviesResult } from "../api";
 import { makeImagePath } from "../utils";
 import { useState } from "react";
+import { PathMatch, useMatch, useNavigate } from "react-router-dom";
 
 const offset = 6;
 
@@ -48,7 +49,7 @@ const Row = styled(motion.div)`
 `;
 const Box = styled(motion.div)<{ $bgPhoto: string }>`
     background-color: white;
-    height: 200px;
+    height: 350px;
     font-size: 66px;
     background-image: url(${(props) => props.$bgPhoto});
     background-size: cover;
@@ -112,6 +113,10 @@ const infoVariants = {
 };
 
 function Home() {
+    const navigate = useNavigate();
+    // const bigMovieMatch = useMatch<{ movieId: string }>("/movies/:movieId");
+    const bigMovieMatch: PathMatch<string> | null = useMatch("/movies/:id");
+    console.log(bigMovieMatch);
     const { data, isLoading } = useQuery<IGetMoviesResult>(
         ["movies", "nowPlaying"],
         getMovies
@@ -132,6 +137,11 @@ function Home() {
             setIndex((prev) => (prev === maxIndex ? 0 : prev + 1));
         }
     };
+
+    const onBoxClicked = (movieId: number) => {
+        navigate(`/movies/${movieId}`);
+    };
+
     return (
         <Wrapper>
             {isLoading ? (
@@ -168,8 +178,12 @@ function Home() {
                                     )
                                     .map((movie) => (
                                         <Box
+                                            layoutId={movie.id + ""}
                                             initial='normal'
                                             whileHover='hover'
+                                            onClick={() =>
+                                                onBoxClicked(movie.id)
+                                            }
                                             transition={{ type: "tween" }}
                                             variants={boxVariants}
                                             $bgPhoto={makeImagePath(
@@ -186,6 +200,23 @@ function Home() {
                             </Row>
                         </AnimatePresence>
                     </Slider>
+                    <AnimatePresence>
+                        {bigMovieMatch ? (
+                            <motion.div
+                                layoutId={bigMovieMatch.params.movieId}
+                                style={{
+                                    position: "absolute",
+                                    width: "40vw",
+                                    height: "80vh",
+                                    backgroundColor: "red",
+                                    top: 50,
+                                    left: 0,
+                                    right: 0,
+                                    margin: "0 auto",
+                                }}
+                            />
+                        ) : null}
+                    </AnimatePresence>
                 </>
             )}
         </Wrapper>
