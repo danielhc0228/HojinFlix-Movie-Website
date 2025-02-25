@@ -1,5 +1,10 @@
 import styled from "styled-components";
-import { useMatch, Link } from "react-router-dom";
+import {
+    useMatch,
+    Link,
+    useNavigate,
+    NavigateFunction,
+} from "react-router-dom";
 import {
     motion,
     useAnimation,
@@ -7,6 +12,7 @@ import {
     useScroll,
 } from "motion/react";
 import { useState } from "react";
+import { useForm } from "react-hook-form";
 
 const Nav = styled(motion.nav)`
     display: flex;
@@ -18,6 +24,7 @@ const Nav = styled(motion.nav)`
     font-size: 14px;
     padding: 20px 60px;
     color: white;
+    z-index: 5;
 `;
 
 const Col = styled.div`
@@ -54,7 +61,7 @@ const Item = styled.li`
     }
 `;
 
-const Search = styled.span`
+const Search = styled.form`
     color: white;
     display: flex;
     align-items: center;
@@ -111,6 +118,10 @@ const navVariants = {
     },
 };
 
+interface IForm {
+    keyword: string;
+}
+
 function Header() {
     const [searchOpen, setSearchOpen] = useState(false);
     const homeMatch = useMatch("/");
@@ -136,6 +147,12 @@ function Header() {
             navAnimation.start("top");
         }
     });
+
+    const navigate: NavigateFunction = useNavigate(); //:NavigationFunction for TypeScript. It's ok without it.
+    const { register, handleSubmit } = useForm<IForm>();
+    const onValid = (data: IForm) => {
+        navigate(`/search?keyword=${data.keyword}`);
+    };
 
     return (
         <Nav variants={navVariants} animate={navAnimation} initial='top'>
@@ -165,7 +182,7 @@ function Header() {
                 </Items>
             </Col>
             <Col>
-                <Search>
+                <Search onSubmit={handleSubmit(onValid)}>
                     <motion.svg
                         onClick={toggleSearch}
                         animate={{ x: searchOpen ? -185 : 0 }}
@@ -181,6 +198,10 @@ function Header() {
                         ></path>
                     </motion.svg>
                     <Input
+                        {...register("keyword", {
+                            required: true,
+                            minLength: 2,
+                        })}
                         transition={{ type: "linear" }}
                         animate={inputAnimation}
                         // animate={{ scaleX: searchOpen ? 1 : 0 }} Can use this or useAnimation also works
