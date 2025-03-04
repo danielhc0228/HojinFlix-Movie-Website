@@ -7,7 +7,10 @@ interface IMovie {
     poster_path: string;
     title: string;
     overview: string;
+    release_date: string;
+    vote_average: number;
 }
+
 export interface IGetMoviesResult {
     dates: {
         maximum: string;
@@ -41,4 +44,16 @@ export function getUpcomingMovies() {
     return fetch(`${BASE_PATH}/movie/upcoming?api_key=${API_KEY}`).then((res) =>
         res.json()
     );
+}
+
+export function getDetailed(movieId: string) {
+    return fetch(`${BASE_PATH}/movie/${movieId}?api_key=${API_KEY}`).then(
+        (res) => res.json()
+    );
+}
+
+export function getTrailer(movieId: string) {
+    return fetch(
+        `${BASE_PATH}/movie/${movieId}/videos?api_key=${API_KEY}`
+    ).then((res) => res.json());
 }

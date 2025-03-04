@@ -7,15 +7,18 @@ import {
     useTransform,
 } from "framer-motion";
 import {
+    getDetailed,
     getNowPlayingMovies,
     getPopularMovies,
     getTopRatedMovies,
     getUpcomingMovies,
+    getTrailer,
 } from "../api";
 import { makeImagePath } from "../utils";
 import { PathMatch, useMatch, useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { IGetMoviesResult } from "../api";
+import { Star, StarHalf } from "lucide-react";
 
 const Wrapper = styled.div`
     background: black;
@@ -114,6 +117,91 @@ const SliderBtnRight = styled(SliderBtnLeft)`
     left: auto;
 `;
 
+const Overlay = styled(motion.div)`
+    position: fixed;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    opacity: 0;
+    z-index: 3;
+`;
+const BigMovie = styled(motion.div)`
+    position: absolute;
+    width: 50vw;
+    height: 80vh;
+    left: 0;
+    right: 0;
+    margin: 0 auto;
+    border-radius: 15px;
+    overflow: hidden;
+    background-color: ${(props) => props.theme.black.lighter};
+    z-index: 3;
+`;
+
+const BigCover = styled.div`
+    width: 100%;
+    background-size: cover;
+    background-position: center center;
+    height: 250px;
+`;
+const BigTitle = styled.h3`
+    color: ${(props) => props.theme.white.lighter};
+    padding: 20px;
+    font-size: 46px;
+    position: relative;
+    top: -80px;
+`;
+const BigOverview = styled.p`
+    padding: 20px;
+    position: relative;
+    top: -80px;
+    color: ${(props) => props.theme.white.lighter};
+`;
+
+const SemiHeader = styled.h3`
+    color: ${(props) => props.theme.white.lighter};
+    font-size: 17px;
+    margin-left: 20px;
+    position: relative;
+    top: -80px;
+    display: flex;
+`;
+
+const Sliders = styled.div`
+    display: flex;
+    flex-direction: column;
+    gap: 500px; /* Adjust spacing between sliders */
+    padding: 20px 0; /* Optional: Add padding at the top and bottom */
+`;
+
+const BannerBtn = styled.button`
+    width: 150px; /* Fixed width for consistency */
+    height: 45px; /* Adjusted height for better appearance */
+    margin-top: 20px;
+    border-radius: 10px;
+    padding: 10px;
+    background-color: rgba(255, 255, 255, 0.2); /* Semi-transparent button */
+    color: white;
+    font-size: 16px;
+    font-weight: bold;
+    border: 2px solid rgba(255, 255, 255, 0.5);
+    backdrop-filter: blur(10px); /* Glassmorphism effect */
+    cursor: pointer;
+    transition: all 0.3s ease-in-out;
+
+    &:hover {
+        background-color: rgba(255, 255, 255, 0.4);
+        border-color: white;
+        opacity: 1;
+        transform: scale(1.05);
+    }
+
+    &:active {
+        transform: scale(0.95);
+    }
+`;
+
 const boxVariants = {
     normal: {
         scale: 1,
@@ -140,60 +228,22 @@ const infoVariants = {
     },
 };
 
-const Overlay = styled(motion.div)`
-    position: fixed;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
-    opacity: 0;
-    z-index: 3;
-`;
-const BigMovie = styled(motion.div)`
-    position: absolute;
-    width: 40vw;
-    height: 80vh;
-    left: 0;
-    right: 0;
-    margin: 0 auto;
-    border-radius: 15px;
-    overflow: hidden;
-    background-color: ${(props) => props.theme.black.lighter};
-    z-index: 3;
-`;
+interface IGenre {
+    id: number;
+    name: string;
+}
 
-const BigCover = styled.div`
-    width: 100%;
-    background-size: cover;
-    background-position: center center;
-    height: 400px;
-`;
-const BigTitle = styled.h3`
-    color: ${(props) => props.theme.white.lighter};
-    padding: 20px;
-    font-size: 46px;
-    position: relative;
-    top: -80px;
-`;
-const BigOverview = styled.p`
-    padding: 20px;
-    position: relative;
-    top: -80px;
-    color: ${(props) => props.theme.white.lighter};
-`;
-
-const Sliders = styled.div`
-    display: flex;
-    flex-direction: column;
-    gap: 500px; /* Adjust spacing between sliders */
-    padding: 20px 0; /* Optional: Add padding at the top and bottom */
-`;
+interface IMovieDetails {
+    genres: IGenre[];
+    runtime: number; // assuming runtime is a number (in minutes)
+    // other fields that might come from the API
+}
 
 function Home() {
     const navigate = useNavigate();
     const bigMovieMatch: PathMatch<string> | null = useMatch("/movies/:id");
     const { scrollY } = useScroll();
-    const setScrollY = useTransform(scrollY, (value) => value + 50);
+    const setScrollY = useTransform(scrollY, (value) => value + 80);
     const { data: nowPlaying, isLoading: nowPlayingLoading } =
         useQuery<IGetMoviesResult>(
             ["movies", "nowPlaying"],
@@ -279,15 +329,6 @@ function Home() {
                     prev === maxIndex ? 0 : prev + 1
                 );
                 selectedData.setRowState(1);
-                // if (category === "nowPlaying") {
-                //     setRowStateNowPlaying(1); // Moving forward
-                // } else if (category === "popular") {
-                //     setRowStatePopular(1); // Moving forward
-                // } else if (category === "topRated") {
-                //     setRowStateTopRated(1); // Moving forward
-                // } else if (category === "upcoming") {
-                //     setRowStateUpcoming(1); // Moving forward
-                // }
             }
         }
     };
@@ -348,6 +389,68 @@ function Home() {
         }),
     };
 
+    const getYear = (date: string) => {
+        if (date) {
+            return date.split("-")[0];
+        } else {
+            return "";
+        }
+    };
+
+    const StarRating = ({ value }: { value: number }) => {
+        const stars = 5;
+        const rating = (value / 10) * stars; // Convert to 5-star scale
+        const fullStars = Math.floor(rating);
+        const hasHalfStar = rating % 1 >= 0.5;
+
+        return (
+            <div>
+                {[...Array(stars)].map((_, index) => (
+                    <span key={index}>
+                        {index < fullStars ? (
+                            <Star
+                                width='20'
+                                fill='currentColor'
+                                stroke='none'
+                            />
+                        ) : index === fullStars && hasHalfStar ? (
+                            <StarHalf
+                                width='20'
+                                fill='currentColor'
+                                stroke='none'
+                            />
+                        ) : (
+                            <Star width='20' />
+                        )}
+                    </span>
+                ))}
+            </div>
+        );
+    };
+
+    const [movieDetails, setMovieDetails] = useState<IMovieDetails | null>(
+        null
+    );
+
+    const [trailerKey, setTrailerKey] = useState<string | null>(null);
+
+    // Fetch additional details for the selected movie
+    useEffect(() => {
+        if (clickedMovie && "id" in clickedMovie) {
+            getDetailed(clickedMovie.id.toString()).then((data) => {
+                setMovieDetails(data);
+            });
+
+            getTrailer(clickedMovie.id.toString()).then((data) => {
+                const trailer = data.results.find(
+                    (video: { type: string; site: string }) =>
+                        video.type === "Trailer" && video.site === "YouTube"
+                );
+                setTrailerKey(trailer ? trailer.key : null);
+            });
+        }
+    }, [clickedMovie]);
+
     return (
         <Wrapper>
             {nowPlayingLoading &&
@@ -364,6 +467,18 @@ function Home() {
                     >
                         <Title>{nowPlaying?.results[0].title}</Title>
                         <Overview>{nowPlaying?.results[0].overview}</Overview>
+                        <BannerBtn
+                            onClick={() => {
+                                if (nowPlaying?.results[0]?.id !== undefined) {
+                                    onBoxClicked(
+                                        nowPlaying.results[0].id,
+                                        "nowPlaying"
+                                    );
+                                }
+                            }}
+                        >
+                            More Info
+                        </BannerBtn>
                     </Banner>
                     <Sliders>
                         <Slider>
@@ -625,17 +740,56 @@ function Home() {
                                 >
                                     {clickedMovie && (
                                         <>
-                                            <BigCover
-                                                style={{
-                                                    backgroundImage: `linear-gradient(to top, black, transparent), url(${makeImagePath(
-                                                        clickedMovie.backdrop_path,
-                                                        "w500"
-                                                    )})`,
-                                                }}
-                                            />
+                                            {trailerKey ? (
+                                                <iframe
+                                                    width='100%'
+                                                    height='400px'
+                                                    src={`https://www.youtube.com/embed/${trailerKey}?autoplay=1&controls=1`}
+                                                    title='Movie Trailer'
+                                                    allow='autoplay; encrypted-media'
+                                                    allowFullScreen
+                                                ></iframe>
+                                            ) : (
+                                                <BigCover
+                                                    style={{
+                                                        backgroundImage: `linear-gradient(to top, black, transparent), url(${makeImagePath(
+                                                            clickedMovie.backdrop_path,
+                                                            "w500"
+                                                        )})`,
+                                                    }}
+                                                />
+                                            )}
+
                                             <BigTitle>
                                                 {clickedMovie.title}
                                             </BigTitle>
+                                            <SemiHeader>
+                                                {getYear(
+                                                    clickedMovie.release_date
+                                                )}
+                                                {"‎ "}
+                                                {"   |   "}
+                                                {"‎ "}
+                                                <StarRating
+                                                    value={
+                                                        clickedMovie.vote_average
+                                                    }
+                                                />
+                                                {"‎ "}
+                                                {clickedMovie.vote_average.toFixed(
+                                                    1
+                                                )}
+                                                {" ‎ | ‎ "}
+                                                {movieDetails?.runtime} min
+                                                {" ‎ | ‎ "}
+                                                {movieDetails?.genres
+                                                    .map(
+                                                        (genre: {
+                                                            name: string;
+                                                        }) => genre.name
+                                                    )
+                                                    .join(" • ")}
+                                            </SemiHeader>
                                             <BigOverview>
                                                 {clickedMovie.overview}
                                             </BigOverview>
