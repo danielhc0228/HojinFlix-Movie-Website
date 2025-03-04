@@ -92,23 +92,29 @@ const Info = styled(motion.div)`
 `;
 
 const SliderBtnLeft = styled.div`
-    margin: auto;
+    width: 50px;
+    height: 50px;
     background-color: rgba(0, 0, 0, 0.5);
-    height: 350px;
+    border-radius: 50%; /* Makes it a circle */
     position: absolute;
-    width: 5%;
-    font-size: 50px;
-    padding: 10px;
+    left: 10px; /* Adjust for positioning */
+    top: 195px;
+    transform: translateY(-50%);
+    font-size: 24px;
     display: flex;
     align-items: center;
     justify-content: center;
-    left: 0;
     z-index: 2;
     cursor: pointer;
-    transition: background-color 0.3s ease-in-out;
+    transition: background-color 0.3s ease-in-out, transform 0.2s ease-in-out;
 
     &:hover {
         background-color: rgba(0, 0, 0, 0.8);
+        transform: translateY(-50%) scale(1.1); /* Slight scale effect */
+    }
+
+    &:active {
+        transform: translateY(-50%) scale(0.9); /* Shrinks when clicked */
     }
 `;
 
