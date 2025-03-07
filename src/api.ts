@@ -112,3 +112,17 @@ export function getTrailerTV(tvId: string) {
         (res) => res.json()
     );
 }
+
+// Search Function
+export function getSearchMovie(keyword: string, page: number = 1) {
+    return fetch(
+        `${BASE_PATH}/search/movie?query=${keyword}&page=${page}&api_key=${API_KEY}`
+    ).then((res) => res.json());
+}
+
+// Search Function
+export function getSearchTV(keyword: string, page: number = 1) {
+    return fetch(
+        `${BASE_PATH}/search/tv?query=${keyword}&page=${page}&api_key=${API_KEY}`
+    ).then((res) => res.json());
+}
